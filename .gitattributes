@@ -1,2 +1,2 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+*.scss linguist-detectable=false
+*.sass linguist-detectable=false
