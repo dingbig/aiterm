@@ -1,4 +1,20 @@
 .container {
-  text-align: center;
   font-family: sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+
 }
+.terminal-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+.helper-container {
+  flex: 1;
+  display: flex;
+  justify-content: left;
+  align-items: start;
+}
+
