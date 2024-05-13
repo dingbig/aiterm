@@ -11,7 +11,11 @@ export const App = () => {
   const [count, setCount] = useState(0);
   const terminalRef = useRef<HTMLDivElement>(null);
   const electronApi = (window as any).electronApi as ElectronApi;
-
+  const [terminalText, setTerminalText] = useState('');
+  const updateTerminalText = (text: string) => {
+    setTerminalText(text);
+  };
+  
   useEffect(() => {
     const terminal = new Terminal();
     const fitAddon = new FitAddon();
@@ -37,6 +41,7 @@ export const App = () => {
 
     electronApi.listenTty(data => {
       terminal.write(data);
+      setTerminalText(prevText => prevText + data);
     });
 
     const onTerminalResize = () => {
@@ -55,14 +60,14 @@ export const App = () => {
 
   return (
     <div className="container">
-      <Card elevation={Elevation.TWO} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", flex: 1 }}>
           <div className="terminal-container" ref={terminalRef} />
           <div className="helper-container">
-            <HelperWindow></HelperWindow>
+            <HelperWindow terminalText={terminalText}></HelperWindow>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

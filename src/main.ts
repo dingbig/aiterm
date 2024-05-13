@@ -23,6 +23,7 @@ app.whenReady().then(() => {
 
   const mainWindow = new BrowserWindow({
     webPreferences: {
+
       preload: path.resolve(__dirname, "preload.js"),
       nodeIntegration: true,
       contextIsolation: true,
@@ -52,7 +53,7 @@ app.whenReady().then(() => {
     ptyProcess.resize(cols, rows);
   });
 
-  const shell = os.platform() === "win32" ? "cmd.exe" : "bash";
+  const shell = os.platform() === "win32" ? "cmd.exe" : os.platform() === "darwin"? "zsh" : "bash";
   const ptyProcess = spawn(shell, [], {
     name: "xterm-color",
     cols: 80,

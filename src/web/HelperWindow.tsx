@@ -1,6 +1,27 @@
 import React, { FC, useState } from 'react';
-import { Card, Button, InputGroup } from '@blueprintjs/core';
+import { Button, InputGroup } from '@blueprintjs/core';
 import './HelperWindow.css'; // Import the CSS file for additional styles
+import { Ollama } from "@langchain/community/llms/ollama";
+import { ChatOllama } from "@langchain/community/chat_models/ollama";
+
+import { OllamaFunctions } from "langchain/experimental/chat_models/ollama_functions";
+import { HumanMessage, SystemMessage, FunctionMessage, ChatMessage, AIMessage, AIMessageChunk } from "@langchain/core/messages";
+
+import { DynamicTool } from "@langchain/core/tools";
+import { ChatOpenAI } from "@langchain/openai";
+
+import { 
+  SystemMessagePromptTemplate, 
+  HumanMessagePromptTemplate, 
+  ChatPromptTemplate
+} from "@langchain/core/prompts"
+
+
+
+
+interface HelperWindowProps {
+  terminalText: string;
+}
 
 interface Message {
   id: number;
@@ -8,24 +29,90 @@ interface Message {
   sender: string;
 }
 
-const HelperWindow: FC = () => {
+const HelperWindow: FC<HelperWindowProps> = (props) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
 
-  const handleSendMessage = () => {
+  
+  const handleBugClick = async () => {
+    console.log('Terminal text:', props.terminalText);
+    await askLlm("解释下这是什么问题：" + props.terminalText);
+  };
+
+  const askLlm = async (question: string) => {
+    const userText = question;
+    const outgoingId = messages.length + 1;
+    const incomingId = messages.length + 2;
+
+    const newMessages = [...messages]; // Create a new array copy
+    const outgoingMessage: Message = {
+      id: outgoingId,
+      text: userText,
+      sender: '我',
+    };
+    newMessages.push(outgoingMessage);
+
+    // Update the state with the new outgoing message
+    setMessages(newMessages);
+
+    setInputText('');
+
+    const incomingMessage: Message = {
+      id: incomingId,
+      text: '正在思考中...',
+      sender: '人工智能',
+    };
+    newMessages.push(incomingMessage);
+
+    // Update the state with the incoming message
+    setMessages(newMessages);
+
+    const ollama = new ChatOllama({
+      baseUrl: "http://localhost:11434",
+      model: "qwen:14b",
+    });
+    
+    
+    const stream = await ollama.stream(userText);
+    const chunks = [];
+    for await (const chunk of stream) {
+      console.log(JSON.stringify(chunk));
+      console.log(chunk as any['type']);
+      if(chunk instanceof AIMessageChunk){
+        const ac = chunk as AIMessageChunk;
+        chunks.push(ac.content);
+      } 
+      setMessages(prevMessages => {
+        const updatedMessages = [...prevMessages]; // Create a new copy of the messages array
+        updatedMessages[updatedMessages.length - 1]['text'] = chunks.join("");
+        return updatedMessages;
+      });
+    }
+
+    // Update the text of the last incoming message
+    setMessages(prevMessages => {
+      const updatedMessages = [...prevMessages]; // Create a new copy of the messages array
+      updatedMessages[updatedMessages.length - 1]['text'] = chunks.join("");
+      return updatedMessages;
+    });
+  }
+
+  const handleSendMessage = async () => {
     if (inputText.trim() !== '') {
-      const newMessage: Message = {
-        id: messages.length + 1,
-        text: inputText,
-        sender: 'User',
-      };
-      setMessages([...messages, newMessage]);
-      setInputText('');
+      await askLlm(inputText.trim());
     }
   };
 
+
+  
   return (
-    <Card className="chat-window">
+    <div className="chat-window">
+      <div>
+      <Button icon="bug" intent="primary" onClick={handleBugClick} />
+      <Button icon="help" intent="primary"></Button>
+      <Button icon="code" intent="primary"></Button>
+      <Button icon="media" intent="primary"></Button>
+      </div>
       <div className="message-list">
         {messages.map((message) => (
           <div key={message.id} className="message">
@@ -38,15 +125,14 @@ const HelperWindow: FC = () => {
         <InputGroup
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          placeholder="Type a message..."
+          placeholder="说点什么..."
           rightElement={
-            <Button onClick={handleSendMessage} minimal={true} intent="primary">
-              Send
+            <Button icon="send-message" onClick={handleSendMessage} large={true} intent="primary">
             </Button>
           }
         />
       </div>
-    </Card>
+    </div>
   );
 };
 

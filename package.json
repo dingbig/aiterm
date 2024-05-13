@@ -1,7 +1,7 @@
 {
   "name": "electron-react-ts",
   "version": "0.0.0",
-  "description": "Electron App",
+  "description": "AiTerm",
   "license": "",
   "author": "",
   "main": "dist/main.js",
@@ -14,8 +14,12 @@
   },
   "dependencies": {
     "@blueprintjs/core": "^5.10.2",
+    "@langchain/anthropic": "^0.1.17",
+    "@langchain/community": "^0.0.56",
+    "@langchain/openai": "^0.0.28",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
+    "langchain": "^0.1.37",
     "node-pty": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
