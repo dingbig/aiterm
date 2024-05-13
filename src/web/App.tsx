@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Card, Elevation } from "@blueprintjs/core";
+import { Alignment, Button, Card, Classes, Elevation, Navbar, NavbarDivider, NavbarGroup, NavbarHeading } from "@blueprintjs/core";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
@@ -11,11 +11,10 @@ export const App = () => {
   const [count, setCount] = useState(0);
   const terminalRef = useRef<HTMLDivElement>(null);
   const electronApi = (window as any).electronApi as ElectronApi;
-  const [terminalText, setTerminalText] = useState('');
-  const updateTerminalText = (text: string) => {
-    setTerminalText(text);
-  };
-  
+  const [getTerminalText, setGetTerminalText] = useState(() => () => '');
+
+
+
   useEffect(() => {
     const terminal = new Terminal();
     const fitAddon = new FitAddon();
@@ -41,7 +40,6 @@ export const App = () => {
 
     electronApi.listenTty(data => {
       terminal.write(data);
-      setTerminalText(prevText => prevText + data);
     });
 
     const onTerminalResize = () => {
@@ -51,6 +49,19 @@ export const App = () => {
 
     terminal.onResize(onTerminalResize);
 
+    setGetTerminalText(() => () => {
+      const selection = terminal.getSelection();
+      if (selection) {
+        return selection;
+      } else {
+        let text = '';
+        const buffer = terminal.buffer.active;
+        for (let i = 0; i < buffer.length; i++) {
+          text += buffer.getLine(i)?.translateToString() || '';
+        }
+        return text;
+      }
+    });
 
     return () => {
       clearTimeout(timeoutId);
@@ -62,9 +73,16 @@ export const App = () => {
     <div className="container">
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", flex: 1 }}>
-          <div className="terminal-container" ref={terminalRef} />
+          <div className="terminal-container" ref={terminalRef}>
+          <Navbar>
+                    <NavbarGroup align={Alignment.LEFT}>
+                        <Button className={Classes.MINIMAL} icon="home"   />
+                        <Button className={Classes.MINIMAL} icon="document"  />
+                    </NavbarGroup>
+                </Navbar>
+          </div>
           <div className="helper-container">
-            <HelperWindow terminalText={terminalText}></HelperWindow>
+            <HelperWindow getTerminalText={getTerminalText}></HelperWindow>
           </div>
         </div>
       </div>
