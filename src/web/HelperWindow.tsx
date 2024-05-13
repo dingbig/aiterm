@@ -20,7 +20,7 @@ import {
 
 
 interface HelperWindowProps {
-  terminalText: string;
+  getTerminalText: () => string;
 }
 
 interface Message {
@@ -35,8 +35,8 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
 
   
   const handleBugClick = async () => {
-    console.log('Terminal text:', props.terminalText);
-    await askLlm("解释下这是什么问题：" + props.terminalText);
+    console.log('Terminal text:', props.getTerminalText());
+    await askLlm("解释下这是什么问题：" + props.getTerminalText());
   };
 
   const askLlm = async (question: string) => {
@@ -112,6 +112,7 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
       <Button icon="help" intent="primary"></Button>
       <Button icon="code" intent="primary"></Button>
       <Button icon="media" intent="primary"></Button>
+      <Button icon="translate" intent="primary"></Button>
       </div>
       <div className="message-list">
         {messages.map((message) => (
