@@ -1,89 +1,38 @@
 {
-  "name": "erwt",
-  "productName": "ERWT",
-  "version": "8.0.0",
-  "description": "Robust project for developing Desktop Application with Electron, React, Webpack & TypeScript.",
-  "main": ".webpack/main",
+  "name": "electron-react-ts",
+  "version": "0.0.0",
+  "description": "Electron App",
+  "license": "",
+  "author": "",
+  "main": "dist/main.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=development electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "lint": "eslint src/ --ext .ts,.js,.tsx,.jsx"
-  },
-  "keywords": [
-    "electron boilerplate",
-    "minimal",
-    "electron-webpack",
-    "electron-react",
-    "electron-typescript",
-    "hmr",
-    "boilerplate",
-    "2024",
-    "ERWT"
-  ],
-  "author": {
-    "name": "codesbiome",
-    "url": "https://github.com/codesbiome"
-  },
-  "contributors": [
-    {
-      "name": "guasam",
-      "url": "https://github.com/guasam"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/codesbiome/electron-react-webpack-typescript-2024"
-  },
-  "license": "MIT",
-  "config": {
-    "forge": "./tools/forge/forge.config.js"
-  },
-  "devDependencies": {
-    "@electron-forge/cli": "7.2.0",
-    "@electron-forge/maker-deb": "7.2.0",
-    "@electron-forge/maker-rpm": "7.2.0",
-    "@electron-forge/maker-squirrel": "7.2.0",
-    "@electron-forge/maker-zip": "7.2.0",
-    "@electron-forge/plugin-webpack": "7.2.0",
-    "@marshallofsound/webpack-asset-relocator-loader": "^0.5.0",
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
-    "@types/node": "^20.10.8",
-    "@types/react": "^18.2.47",
-    "@types/react-dom": "^18.2.18",
-    "@types/webpack-env": "^1.18.4",
-    "@typescript-eslint/eslint-plugin": "^6.18.1",
-    "@typescript-eslint/parser": "^6.18.1",
-    "@vercel/webpack-asset-relocator-loader": "^1.7.3",
-    "classnames": "^2.5.1",
-    "cross-env": "^7.0.3",
-    "css-loader": "^6.9.0",
-    "electron": "^28.1.2",
-    "eslint": "^8.56.0",
-    "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-react": "^7.33.2",
-    "file-loader": "^6.2.0",
-    "fork-ts-checker-webpack-plugin": "^9.0.2",
-    "node-loader": "^2.0.0",
-    "react-refresh": "^0.14.0",
-    "sass": "^1.69.7",
-    "sass-loader": "^13.3.3",
-    "style-loader": "^3.3.4",
-    "ts-loader": "9.5.1",
-    "typescript": "^5.3.3",
-    "webpack": "^5.89.0"
+    "dev": "rimraf dist && run-p dev:*",
+    "build": "rimraf dist && cross-env NODE_ENV=\"production\" webpack --progress",
+    "dev:tsc": "tsc -w -p tsconfig.node.json",
+    "dev:webpack": "cross-env NODE_ENV=\"development\" webpack --progress",
+    "dev:electron": "wait-on ./dist/index.html ./dist/main.js && cross-env NODE_ENV=\"development\" electron ."
   },
   "dependencies": {
-    "@blueprintjs/core": "^5.10.2",
-    "@blueprintjs/datetime": "^5.3.4",
-    "@blueprintjs/icons": "^5.9.0",
-    "@blueprintjs/select": "^5.1.4",
-    "@blueprintjs/table": "^5.1.4",
-    "@xterm/xterm": "^5.5.0",
-    "electron-squirrel-startup": "^1.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@types/react": "^18.2.77",
+    "@types/react-dom": "^18.2.25",
+    "cross-env": "^7.0.3",
+    "css-loader": "^7.1.1",
+    "electron": "^29.3.0",
+    "electron-reload": "^2.0.0-alpha.1",
+    "html-webpack-plugin": "^5.6.0",
+    "mini-css-extract-plugin": "^2.8.1",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^5.0.5",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5",
+    "wait-on": "^7.2.0",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
   }
 }
