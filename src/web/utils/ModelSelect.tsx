@@ -12,7 +12,7 @@ const filterModel: ItemPredicate<Model> = (query, model, _index, exactMatch) => 
     if (exactMatch) {
         return normalizedTitle === normalizedQuery;
     } else {
-        return `${model.rank}. ${normalizedTitle} ${model.year}`.indexOf(normalizedQuery) >= 0;
+        return `${model.id}. ${normalizedTitle} ${model.name}`.indexOf(normalizedQuery) >= 0;
     }
 };
 
@@ -24,18 +24,18 @@ const renderModel: ItemRenderer<Model> = (model, { handleClick, handleFocus, mod
         <MenuItem
             active={modifiers.active}
             disabled={modifiers.disabled}
-            key={model.rank}
-            label={model.year.toString()}
+            key={model.id}
+            label={model.modified}
             onClick={handleClick}
             onFocus={handleFocus}
             roleStructure="listoption"
-            text={`${model.rank}. ${model.name}`}
+            text={`${model.size}. ${model.name}`}
         />
     );
 };
 
 
-const ModelSelect: React.FC = () => {
+export const ModelSelect: React.FC = () => {
     const modelList = useModelList();
     const [selectedModel, setSelectedModel] = React.useState<Model | undefined>();
     const handleItemSelect = (item: Model, event?: React.SyntheticEvent<HTMLElement, Event>) => {
@@ -52,7 +52,7 @@ const ModelSelect: React.FC = () => {
             noResults={<MenuItem disabled={true} text="No results." roleStructure="listoption" />}
             onItemSelect={handleItemSelect}
         >
-            <Button text={selectedModel?.name} rightIcon="double-caret-vertical" placeholder="Select a film" />
+            <Button text={selectedModel?.name} rightIcon="double-caret-vertical" />
         </Select>
     );
 };
