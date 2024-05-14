@@ -15,10 +15,12 @@ import {
   HumanMessagePromptTemplate, 
   ChatPromptTemplate
 } from "@langchain/core/prompts"
-
-
-
-
+import Markdown from 'react-markdown'
+import 'highlight.js/styles/github.css';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { github } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import rehypeHighlight from 'rehype-highlight';
+import remarkGfm from 'remark-gfm'
 interface HelperWindowProps {
   getTerminalText: () => string;
 }
@@ -33,10 +35,20 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
 
-  
+  const renderers = {
+    code: ({ language, value }) => {
+      return <SyntaxHighlighter language={language} style={github}>{value}</SyntaxHighlighter>;
+    },
+  };
+
+  const handleTranslateClick = async () => {
+    await askLlm("Please explain the translated text into Chinese: " + props.getTerminalText());
+  };
+
+
   const handleBugClick = async () => {
     console.log('Terminal text:', props.getTerminalText());
-    await askLlm("解释下这是什么问题：" + props.getTerminalText());
+    await askLlm("解释下这是什么问题：\n```bash\n" + props.getTerminalText() + "\n```");
   };
 
   const askLlm = async (question: string) => {
@@ -69,7 +81,7 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
 
     const ollama = new ChatOllama({
       baseUrl: "http://localhost:11434",
-      model: "qwen:14b",
+      model: "qwen:14b-chat",
     });
     
     
@@ -104,21 +116,31 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
   };
 
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+
+
+
   
   return (
     <div className="chat-window">
-      <div>
-      <Button icon="bug" intent="primary" onClick={handleBugClick} />
-      <Button icon="help" intent="primary"></Button>
-      <Button icon="code" intent="primary"></Button>
-      <Button icon="media" intent="primary"></Button>
-      <Button icon="translate" intent="primary"></Button>
+      <div className="top-bar">
+        <Button icon="bug" intent="primary" onClick={handleBugClick} />
+        <Button icon="help" intent="primary"></Button>
+        <Button icon="code" intent="primary"></Button>
+        <Button icon="media" intent="primary"></Button>
+        <Button icon="translate" intent="primary" onClick={handleTranslateClick}></Button>
       </div>
       <div className="message-list">
         {messages.map((message) => (
           <div key={message.id} className="message">
             <span className="sender">{message.sender}: </span>
-            <span className="text">{message.text}</span>
+            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+              {message.text}
+            </Markdown>
           </div>
         ))}
       </div>
@@ -127,6 +149,7 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="说点什么..."
+          onKeyDown={handleKeyDown}
           rightElement={
             <Button icon="send-message" onClick={handleSendMessage} large={true} intent="primary">
             </Button>
@@ -134,6 +157,8 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
         />
       </div>
     </div>
+
+
   );
 };
 

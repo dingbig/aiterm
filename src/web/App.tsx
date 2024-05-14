@@ -74,12 +74,6 @@ export const App = () => {
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", flex: 1 }}>
           <div className="terminal-container" ref={terminalRef}>
-          <Navbar>
-                    <NavbarGroup align={Alignment.LEFT}>
-                        <Button className={Classes.MINIMAL} icon="home"   />
-                        <Button className={Classes.MINIMAL} icon="document"  />
-                    </NavbarGroup>
-                </Navbar>
           </div>
           <div className="helper-container">
             <HelperWindow getTerminalText={getTerminalText}></HelperWindow>

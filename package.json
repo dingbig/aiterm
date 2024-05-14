@@ -19,10 +19,19 @@
     "@langchain/openai": "^0.0.28",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
+    "highlight.js": "^11.9.0",
     "langchain": "^0.1.37",
+    "markd": "^1.2.0",
+    "markdown-to-jsx": "^7.4.7",
+    "marked-react": "^2.0.0",
     "node-pty": "^1.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-markdown": "^9.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "rehype-highlight": "^7.0.0",
+    "rehype-react": "^8.0.0",
+    "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",

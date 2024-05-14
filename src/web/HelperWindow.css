@@ -3,13 +3,30 @@
     flex-direction: column;
     width: 100%;
     height: 100%;
-    overflow: hidden;
+}
+
+.top-bar {
+    display: flex;
+    align-items: start;
+    background-color: #909090;
+    border-bottom: 1px solid #ccc;
+    padding: 10px;
+}
+.top-bar .bp5-button {
+    margin-right: 6px;
 }
 
 .message-list {
-    flex-grow: 1;
+    flex: 1;
     overflow-y: auto;
     padding: 20px;
+}
+
+.message-list pre {
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .message {
@@ -19,19 +36,18 @@
 .sender {
     font-weight: bold;
 }
-
 .input-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: #f0f0f0;
+    background-color: #909090;
     border-top: 1px solid #ccc;
+    padding: 10px;
 }
 
-.input-container .bp3-input {
+.input-container .bp5-input-group {
     flex-grow: 1;
 }
-
-.bp3-button {
+.input-container .bp5-button {
     margin-left: 10px;
 }
