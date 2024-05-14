@@ -1,6 +1,7 @@
 import path from "node:path";
 import { BrowserWindow, app, ipcMain, session } from "electron";
 import { spawn } from "node-pty";
+import { exec } from 'child_process';
 import os from "os";
 
 
@@ -52,6 +53,8 @@ app.whenReady().then(() => {
   ipcMain.on("terminal-resize", (event, { cols, rows }) => {
     ptyProcess.resize(cols, rows);
   });
+
+
 
   const shell = os.platform() === "win32" ? "cmd.exe" : os.platform() === "darwin"? "zsh" : "bash";
   const ptyProcess = spawn(shell, [], {

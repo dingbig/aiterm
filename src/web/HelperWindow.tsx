@@ -21,6 +21,8 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { github } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm'
+import { useModelList } from './utils/ModelList';
+
 interface HelperWindowProps {
   getTerminalText: () => string;
 }
@@ -34,12 +36,7 @@ interface Message {
 const HelperWindow: FC<HelperWindowProps> = (props) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-
-  const renderers = {
-    code: ({ language, value }) => {
-      return <SyntaxHighlighter language={language} style={github}>{value}</SyntaxHighlighter>;
-    },
-  };
+  const modelList = useModelList();
 
   const handleTranslateClick = async () => {
     await askLlm("Please explain the translated text into Chinese: " + props.getTerminalText());

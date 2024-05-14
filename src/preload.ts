@@ -1,4 +1,4 @@
-import { ElectronApi, TtyCallback } from './electron_api';
+import { ElectronApi, Model, TtyCallback } from './electron_api';
 
 console.log("preloaded!");
 const { contextBridge, ipcRenderer, shell } = require('electron');
@@ -13,7 +13,7 @@ const electronApi: ElectronApi = {
   },
   sendTerminalResize: (cols: number, rows: number) => {
     ipcRenderer.send("terminal-resize", { cols, rows });
-  },
+  }
 }
 contextBridge.exposeInMainWorld('electronApi', electronApi);
 

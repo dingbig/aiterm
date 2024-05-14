@@ -14,11 +14,13 @@
   },
   "dependencies": {
     "@blueprintjs/core": "^5.10.2",
+    "@blueprintjs/select": "^5.1.4",
     "@langchain/anthropic": "^0.1.17",
     "@langchain/community": "^0.0.56",
     "@langchain/openai": "^0.0.28",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
+    "child_process": "^1.0.2",
     "highlight.js": "^11.9.0",
     "langchain": "^0.1.37",
     "markd": "^1.2.0",
