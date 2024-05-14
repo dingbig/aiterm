@@ -22,6 +22,7 @@ import { github } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm'
 import { useModelList } from './utils/ModelList';
+import { ModelSelect } from './utils/ModelSelect';
 
 interface HelperWindowProps {
   getTerminalText: () => string;
@@ -130,6 +131,7 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
         <Button icon="code" intent="primary"></Button>
         <Button icon="media" intent="primary"></Button>
         <Button icon="translate" intent="primary" onClick={handleTranslateClick}></Button>
+        <ModelSelect></ModelSelect>
       </div>
       <div className="message-list">
         {messages.map((message) => (
