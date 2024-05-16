@@ -1,4 +1,4 @@
-import { ElectronApi, Model, TtyCallback } from './electron_api';
+import { ElectronApi, TtyCallback } from './electron_api';
 
 console.log("preloaded!");
 const { contextBridge, ipcRenderer, shell } = require('electron');

@@ -23,8 +23,9 @@ app.whenReady().then(() => {
 
 
   const mainWindow = new BrowserWindow({
+    width: 1600,
+    height: 900,
     webPreferences: {
-
       preload: path.resolve(__dirname, "preload.js"),
       nodeIntegration: true,
       contextIsolation: true,

@@ -2,21 +2,21 @@ import { Button, MenuItem } from "@blueprintjs/core";
 import { ItemPredicate, ItemRenderer, Select } from "@blueprintjs/select";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { Model } from "../../electron_api";
+import { ModelInfo } from "../../electron_api";
 import { useModelList } from "./ModelList";
 
-const filterModel: ItemPredicate<Model> = (query, model, _index, exactMatch) => {
+const filterModel: ItemPredicate<ModelInfo> = (query, model, _index, exactMatch) => {
     const normalizedTitle = model.name.toLowerCase();
     const normalizedQuery = query.toLowerCase();
 
     if (exactMatch) {
         return normalizedTitle === normalizedQuery;
     } else {
-        return `${model.id}. ${normalizedTitle} ${model.name}`.indexOf(normalizedQuery) >= 0;
+        return `${model.name}. ${normalizedTitle} ${model.model}`.indexOf(normalizedQuery) >= 0;
     }
 };
 
-const renderModel: ItemRenderer<Model> = (model, { handleClick, handleFocus, modifiers, query }) => {
+const renderModel: ItemRenderer<ModelInfo> = (model, { handleClick, handleFocus, modifiers, query }) => {
     if (!modifiers.matchesPredicate) {
         return null;
     }
@@ -24,35 +24,57 @@ const renderModel: ItemRenderer<Model> = (model, { handleClick, handleFocus, mod
         <MenuItem
             active={modifiers.active}
             disabled={modifiers.disabled}
-            key={model.id}
+            key={model.digest}
             label={model.modified}
             onClick={handleClick}
             onFocus={handleFocus}
             roleStructure="listoption"
-            text={`${model.size}. ${model.name}`}
+            text={`${model.name}`}
         />
     );
 };
 
+export interface ModelSelectProps {
+    onModelSelect: (model: ModelInfo) => void;
+}
 
-export const ModelSelect: React.FC = () => {
+
+export const ModelSelect: React.FC<ModelSelectProps> = ( props ) => {
     const modelList = useModelList();
-    const [selectedModel, setSelectedModel] = React.useState<Model | undefined>();
-    const handleItemSelect = (item: Model, event?: React.SyntheticEvent<HTMLElement, Event>) => {
+    const [selectedModel, setSelectedModel] = React.useState<ModelInfo | undefined>();
+    const handleItemSelect = (item: ModelInfo, event?: React.SyntheticEvent<HTMLElement, Event>) => {
         setSelectedModel(item);
+        props.onModelSelect(item);
     };
-    React.useEffect(()=> {
-        modelList.reloadModels();
-    }, []);
+
+    if (modelList.isLoading) {
+        return <div>Loading...</div>;
+    }
+
+    if (modelList.error) {
+        return <div>Error: {modelList.error}</div>;
+    }
+
+    if (!modelList.models) {
+        return <div>No models</div>;
+    }
+
+    if (modelList.models.length == 0) {
+        return <div>No models</div>;
+    }
+
+    const firstModel = modelList.models[0] as ModelInfo;
+
     return (
-        <Select<Model>
-            items={modelList.models}
-            itemPredicate={filterModel}
-            itemRenderer={renderModel}
-            noResults={<MenuItem disabled={true} text="No results." roleStructure="listoption" />}
-            onItemSelect={handleItemSelect}
-        >
-            <Button text={selectedModel?.name} rightIcon="double-caret-vertical" />
-        </Select>
+      <Select
+        filterable={true}
+        items={modelList.models}
+        itemPredicate={filterModel}
+        itemRenderer={renderModel}
+        noResults={<MenuItem disabled={true} text="No results." roleStructure="listoption" />}
+        onItemSelect={handleItemSelect}
+      >
+          <Button text={selectedModel?.name || firstModel.name} rightIcon="double-caret-vertical" />
+      </Select>
     );
 };

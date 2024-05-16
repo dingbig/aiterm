@@ -1,28 +1,28 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { Button, InputGroup } from '@blueprintjs/core';
 import './HelperWindow.css'; // Import the CSS file for additional styles
 import { Ollama } from "@langchain/community/llms/ollama";
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
 
 import { OllamaFunctions } from "langchain/experimental/chat_models/ollama_functions";
-import { HumanMessage, SystemMessage, FunctionMessage, ChatMessage, AIMessage, AIMessageChunk } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage, FunctionMessage, ChatMessage, AIMessage, AIMessageChunk, MessageContent } from '@langchain/core/messages';
 
-import { DynamicTool } from "@langchain/core/tools";
-import { ChatOpenAI } from "@langchain/openai";
+import { DynamicTool } from '@langchain/core/tools';
+import { ChatOpenAI } from '@langchain/openai';
 
-import { 
-  SystemMessagePromptTemplate, 
-  HumanMessagePromptTemplate, 
-  ChatPromptTemplate
-} from "@langchain/core/prompts"
-import Markdown from 'react-markdown'
+import {
+  SystemMessagePromptTemplate,
+  HumanMessagePromptTemplate,
+  ChatPromptTemplate,
+} from '@langchain/core/prompts';
+import Markdown from 'react-markdown';
 import 'highlight.js/styles/github.css';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { github } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
 import rehypeHighlight from 'rehype-highlight';
-import remarkGfm from 'remark-gfm'
+import remarkGfm from 'remark-gfm';
 import { useModelList } from './utils/ModelList';
 import { ModelSelect } from './utils/ModelSelect';
+import { ModelInfo } from '../electron_api';
 
 interface HelperWindowProps {
   getTerminalText: () => string;
@@ -37,16 +37,16 @@ interface Message {
 const HelperWindow: FC<HelperWindowProps> = (props) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-  const modelList = useModelList();
-
+  const [selectedModel, setSelectedModel] = useState<ModelInfo | undefined>();
+  const messageListRef = React.useRef<HTMLDivElement>(null);
   const handleTranslateClick = async () => {
-    await askLlm("Please explain the translated text into Chinese: " + props.getTerminalText());
+    await askLlm('Please explain the translated text into Chinese: ' + props.getTerminalText());
   };
 
 
   const handleBugClick = async () => {
     console.log('Terminal text:', props.getTerminalText());
-    await askLlm("解释下这是什么问题：\n```bash\n" + props.getTerminalText() + "\n```");
+    await askLlm('解释下这是什么问题：\n```bash\n' + props.getTerminalText() + '\n```');
   };
 
   const askLlm = async (question: string) => {
@@ -78,20 +78,18 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
     setMessages(newMessages);
 
     const ollama = new ChatOllama({
-      baseUrl: "http://localhost:11434",
-      model: "qwen:14b-chat",
+      baseUrl: 'http://localhost:11434',
+      model: selectedModel? selectedModel.model : 'N/A',
     });
-    
-    
+
+
     const stream = await ollama.stream(userText);
-    const chunks = [];
+    const chunks: MessageContent[] = [];
     for await (const chunk of stream) {
       console.log(JSON.stringify(chunk));
       console.log(chunk as any['type']);
-      if(chunk instanceof AIMessageChunk){
-        const ac = chunk as AIMessageChunk;
-        chunks.push(ac.content);
-      } 
+      const ac = chunk as AIMessageChunk;
+      chunks.push(ac.content);
       setMessages(prevMessages => {
         const updatedMessages = [...prevMessages]; // Create a new copy of the messages array
         updatedMessages[updatedMessages.length - 1]['text'] = chunks.join("");
@@ -113,6 +111,11 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
     }
   };
 
+  const handleModelSelect = async (model: ModelInfo) => {
+    console.log('Selected model:', model);
+    setSelectedModel(model);
+  }
+
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -121,6 +124,12 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
   };
 
 
+
+  useEffect(() => {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   
   return (
@@ -131,9 +140,11 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
         <Button icon="code" intent="primary"></Button>
         <Button icon="media" intent="primary"></Button>
         <Button icon="translate" intent="primary" onClick={handleTranslateClick}></Button>
-        <ModelSelect></ModelSelect>
+        <div className="model-select-container">
+          <ModelSelect onModelSelect={handleModelSelect} />
+        </div>
       </div>
-      <div className="message-list">
+      <div className="message-list" ref={messageListRef}>
         {messages.map((message) => (
           <div key={message.id} className="message">
             <span className="sender">{message.sender}: </span>

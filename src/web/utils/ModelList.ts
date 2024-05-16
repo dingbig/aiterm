@@ -2,22 +2,36 @@ import React, { useEffect, useState } from 'react';
 
 export const useModelList = () => {
   const [models, setModels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     reloadModels();
   }, []);
 
-  const reloadModels = async () => {
-    try {
-      const response = await fetch('http://localhost:11434/api/tags');
-      const data = await response.json();
-      console.log(data)
-      setModels(data.models);
-    } catch (error) {
-      console.error('Error loading models:', error);
-    }
+  const reloadModels = async (): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+    return new Promise((resolve, reject) => {
+      fetch('http://localhost:11434/api/tags')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to load models');
+          }
+          return response.json();
+        })
+        .then(data => {
+          setModels(data.models);
+          setIsLoading(false);
+          resolve();
+        })
+        .catch(error => {
+          setIsLoading(false);
+          setError(error.message);
+          reject(error);
+        });
+    })
   };
 
-  return { models, reloadModels };
+  return { models, isLoading, error, reloadModels };
 };

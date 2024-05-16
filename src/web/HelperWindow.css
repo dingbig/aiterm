@@ -5,16 +5,24 @@
     height: 100%;
 }
 
+
 .top-bar {
     display: flex;
-    align-items: start;
+    align-items: center;
     background-color: #909090;
     border-bottom: 1px solid #ccc;
     padding: 10px;
 }
+
+
 .top-bar .bp5-button {
     margin-right: 6px;
 }
+
+.model-select-container {
+    margin-left: auto;
+}
+
 
 .message-list {
     flex: 1;
