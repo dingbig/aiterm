@@ -2,7 +2,8 @@ export type TtyCallback = (data: string | Uint8Array) => void;
 export type ListModelsCallback = (models: string[]) => void;
 export interface Model {
   name: string;
-  id: string;
+  model: string;
+  digest: string;
   size: string;
   modified: string;
 }
