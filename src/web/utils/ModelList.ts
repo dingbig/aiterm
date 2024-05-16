@@ -12,6 +12,7 @@ export const useModelList = () => {
     try {
       const response = await fetch('http://localhost:11434/api/tags');
       const data = await response.json();
+      console.log(data)
       setModels(data.models);
     } catch (error) {
       console.error('Error loading models:', error);
