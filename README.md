@@ -47,18 +47,23 @@ AiTerm 是一款智能终端增强工具，集成了 AI 功能以改善您的命
    cd aiterm
    ```
 
-2. **安装依赖**
+2. **安装 Visual Studio 2022**
+   ```
+   https://visualstudio.microsoft.com/zh-hans/vs/
+   ```
+
+3. **安装依赖**
    ```bash
    yarn install
    npm rebuild
    ```
 
-3. **下载 AI 模型**
+4. **下载 AI 模型**
    ```bash
    ollama pull qwen3:8b
    ```
 
-4. **启动应用**
+5. **启动应用**
    ```bash
    yarn run dev
    ```
