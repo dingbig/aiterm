@@ -62,7 +62,8 @@ wss.on('connection', (ws: WebSocket) => {
     shellArgs = ['-NoLogo'];
   } else {
     shellCommand = process.env.SHELL || '/bin/bash';
-    shellArgs = ['--login', '-i']; // 以登录和交互模式启动
+    // 使用 stty 命令禁用回显
+    shellArgs = ['--login', '-i'];
   }
 
   const homeDir = os.homedir();
@@ -76,17 +77,20 @@ wss.on('connection', (ws: WebSocket) => {
     shell: false
   });
 
+  // 禁用终端回显
+  if (process.platform !== 'win32') {
+    shellProcess.stdin.write('stty -echo\n');
+  }
+
   // 将shell输出发送到WebSocket客户端
   shellProcess.stdout.on('data', (data) => {
     if (ws.readyState === ws.OPEN) {
-      console.log('Shell stdout:', data.toString());
       ws.send(data.toString());
     }
   });
 
   shellProcess.stderr.on('data', (data) => {
     if (ws.readyState === ws.OPEN) {
-      console.log('Shell stderr:', data.toString());
       ws.send(data.toString());
     }
   });
