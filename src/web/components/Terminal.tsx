@@ -95,17 +95,10 @@ export const Terminal: React.FC<TerminalProps> = ({ className }) => {
                 } else if (charCode === 26) {
                     // Ctrl+Z
                     ws.send('\x1A');
-                } else if (charCode === 127 || charCode === 8) {
-                    // Backspace (127) or Delete (8)
-                    term.write('\b \b'); // 删除一个字符
-                    ws.send(data);
                 } else if (data === '\r') {
-                    // 回车键 - 本地显示换行并发送
-                    term.write('\r\n');
+                    // 回车键 - 只发送 \n
                     ws.send('\n');
                 } else {
-                    // 普通字符 - 本地回显
-                    term.write(data);
                     ws.send(data);
                 }
             }
