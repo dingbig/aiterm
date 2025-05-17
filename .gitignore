@@ -3,3 +3,6 @@ node_modules
 package-lock.json
 .env
 .DS_Store
+/_node_modules
+/.vscode
+node_modules.7z

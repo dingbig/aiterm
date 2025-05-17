@@ -45,7 +45,6 @@ app.whenReady().then(() => {
     callback({ responseHeaders });
   });
   mainWindow.loadFile("dist/index.html");
-  mainWindow.webContents.openDevTools({ mode: "detach" });
 
   ipcMain.on("terminal-input", (event, input: string) => {
     ptyProcess.write(input);
