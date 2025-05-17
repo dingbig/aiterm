@@ -1,80 +1,63 @@
 import { Button, MenuItem } from "@blueprintjs/core";
-import { ItemPredicate, ItemRenderer, Select } from "@blueprintjs/select";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-import { ModelInfo } from "../../electron_api";
-import { useModelList } from "./ModelList";
+import { Select } from "@blueprintjs/select";
+import { ModelInfo } from '../../electron_api';
+import { useModelList } from './ModelList';
+import React from 'react';
 
-const filterModel: ItemPredicate<ModelInfo> = (query, model, _index, exactMatch) => {
-    const normalizedTitle = model.name.toLowerCase();
-    const normalizedQuery = query.toLowerCase();
-
-    if (exactMatch) {
-        return normalizedTitle === normalizedQuery;
-    } else {
-        return `${model.name}. ${normalizedTitle} ${model.model}`.indexOf(normalizedQuery) >= 0;
-    }
-};
-
-const renderModel: ItemRenderer<ModelInfo> = (model, { handleClick, handleFocus, modifiers, query }) => {
-    if (!modifiers.matchesPredicate) {
-        return null;
-    }
-    return (
-        <MenuItem
-            active={modifiers.active}
-            disabled={modifiers.disabled}
-            key={model.digest}
-            label={model.modified}
-            onClick={handleClick}
-            onFocus={handleFocus}
-            roleStructure="listoption"
-            text={`${model.name}`}
-        />
-    );
-};
-
-export interface ModelSelectProps {
-    onModelSelect: (model: ModelInfo) => void;
+interface ModelSelectProps {
+  onModelSelect: (model: ModelInfo) => void;
+  disabled?: boolean;
 }
 
+const ModelSelect = Select.ofType<ModelInfo>();
 
-export const ModelSelect: React.FC<ModelSelectProps> = ( props ) => {
-    const modelList = useModelList();
-    const [selectedModel, setSelectedModel] = React.useState<ModelInfo | undefined>();
-    const handleItemSelect = (item: ModelInfo, event?: React.SyntheticEvent<HTMLElement, Event>) => {
-        setSelectedModel(item);
-        props.onModelSelect(item);
-    };
+export const ModelSelectComponent: React.FC<ModelSelectProps> = ({ onModelSelect, disabled }) => {
+  const modelList = useModelList();
+  const [selectedModel, setSelectedModel] = React.useState<ModelInfo | undefined>();
 
-    if (modelList.isLoading) {
-        return <div>Loading...</div>;
-    }
-
-    if (modelList.error) {
-        return <div>Error: {modelList.error}</div>;
-    }
-
-    if (!modelList.models) {
-        return <div>No models</div>;
-    }
-
-    if (modelList.models.length == 0) {
-        return <div>No models</div>;
-    }
-
-    const firstModel = modelList.models[0] as ModelInfo;
-
+  const renderModel = (model: ModelInfo, { handleClick }: { handleClick: (event: React.MouseEvent<HTMLElement>) => void }) => {
     return (
-      <Select
-        filterable={true}
-        items={modelList.models}
-        itemPredicate={filterModel}
-        itemRenderer={renderModel}
-        noResults={<MenuItem disabled={true} text="No results." roleStructure="listoption" />}
-        onItemSelect={handleItemSelect}
-      >
-          <Button text={selectedModel?.name || firstModel.name} rightIcon="double-caret-vertical" />
-      </Select>
+      <MenuItem
+        key={model.name}
+        text={model.name}
+        onClick={handleClick}
+      />
     );
+  };
+
+  const handleItemSelect = (item: ModelInfo) => {
+    setSelectedModel(item);
+    onModelSelect(item);
+  };
+
+  if (modelList.isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (modelList.error) {
+    return <div>Error: {modelList.error}</div>;
+  }
+
+  if (!modelList.models || modelList.models.length === 0) {
+    return <div>No models available</div>;
+  }
+
+  const models = modelList.models as ModelInfo[];
+
+  return (
+    <ModelSelect
+      items={models}
+      itemRenderer={renderModel}
+      onItemSelect={handleItemSelect}
+      disabled={disabled}
+    >
+      <Button
+        text={selectedModel?.name || models[0].name}
+        rightIcon="double-caret-vertical"
+        disabled={disabled || modelList.isLoading}
+      />
+    </ModelSelect>
+  );
 };
+
+export { ModelSelectComponent as ModelSelect };

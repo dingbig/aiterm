@@ -42,6 +42,34 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const messageListRef = React.useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const initializeModel = async () => {
+      try {
+        const response = await fetch('http://localhost:11434/api/tags');
+        if (!response.ok) {
+          throw new Error('Failed to fetch models');
+        }
+        const data = await response.json();
+        if (data.models && data.models.length > 0) {
+          const firstModel = data.models[0];
+          setSelectedModel({
+            name: firstModel.name,
+            model: firstModel.name,
+            digest: firstModel.digest || '',
+            size: firstModel.size || '0',
+            modified: new Date(firstModel.modified_at || Date.now()).toISOString()
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching initial model:', error);
+      }
+    };
+
+    if (!selectedModel) {
+      initializeModel();
+    }
+  }, []);
+
   const handleTranslateClick = async () => {
     await askLlm('Please explain the translated text into Chinese: ' + props.getTerminalText());
   };
@@ -163,7 +191,7 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
   }
 
   const handleSendMessage = async () => {
-    if (inputText.trim() !== '') {
+    if (inputText.trim() !== '' && !isModelWorking) {
       await askLlm(inputText.trim());
     }
   };
@@ -174,7 +202,7 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
   }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !isModelWorking) {
       handleSendMessage();
     }
   };
@@ -188,11 +216,33 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
   return (
     <div className="chat-window">
       <div className="top-bar">
-        <Button icon="bug" intent="primary" onClick={handleBugClick} />
-        <Button icon="help" intent="primary"></Button>
-        <Button icon="code" intent="primary"></Button>
-        <Button icon="media" intent="primary"></Button>
-        <Button icon="translate" intent="primary" onClick={handleTranslateClick}></Button>
+        <Button 
+          icon="bug" 
+          intent="primary" 
+          onClick={handleBugClick}
+          disabled={isModelWorking} 
+        />
+        <Button 
+          icon="help" 
+          intent="primary"
+          disabled={isModelWorking}
+        />
+        <Button 
+          icon="code" 
+          intent="primary"
+          disabled={isModelWorking}
+        />
+        <Button 
+          icon="media" 
+          intent="primary"
+          disabled={isModelWorking}
+        />
+        <Button 
+          icon="translate" 
+          intent="primary" 
+          onClick={handleTranslateClick}
+          disabled={isModelWorking}
+        />
         {isModelWorking && (
           <Button 
             icon="stop" 
@@ -201,7 +251,10 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
           >停止生成</Button>
         )}
         <div className="model-select-container">
-          <ModelSelect onModelSelect={handleModelSelect} />
+          <ModelSelect 
+            onModelSelect={handleModelSelect}
+            disabled={isModelWorking}
+          />
         </div>
       </div>
       <div className="message-list" ref={messageListRef}>
@@ -220,9 +273,15 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
           onChange={(e) => setInputText(e.target.value)}
           placeholder="说点什么..."
           onKeyDown={handleKeyDown}
+          disabled={isModelWorking}
           rightElement={
-            <Button icon="send-message" onClick={handleSendMessage} large={true} intent="primary">
-            </Button>
+            <Button 
+              icon="send-message" 
+              onClick={handleSendMessage} 
+              large={true} 
+              intent="primary"
+              disabled={isModelWorking || !inputText.trim()}
+            />
           }
         />
       </div>
