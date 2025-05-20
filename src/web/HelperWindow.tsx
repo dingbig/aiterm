@@ -26,16 +26,20 @@ import { ModelInfo } from '../electron_api';
 
 interface HelperWindowProps {
   getTerminalText: () => string;
+  writeToTerminal: (cmd: string) => void;
 }
 
 interface Message {
   id: number;
   text: string;
   sender: string;
+  collapsedThink?: boolean;
+  type?: string;
 }
 
 const HelperWindow: FC<HelperWindowProps> = (props) => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [thinkCollapseMap, setThinkCollapseMap] = useState<{ [id: number]: boolean }>({});
   const [inputText, setInputText] = useState('');
   const [selectedModel, setSelectedModel] = useState<ModelInfo | undefined>();
   const [isModelWorking, setIsModelWorking] = useState(false);
@@ -76,7 +80,27 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
 
   const handleBugClick = async () => {
     console.log('Terminal text:', props.getTerminalText());
-    await askLlm('解释下这是什么问题：\n```bash\n' + props.getTerminalText() + '\n```');
+    await askLlm('请根据以下终端输出，用清晰而简洁的语言解释这是什么问题：\n```bash\n' + props.getTerminalText() + '\n```');
+  };
+
+  const handleCodeClick = async () => {
+    const terminalText = props.getTerminalText();
+    const cmd = await askLlm(
+      `请根据以下终端输出，建议用户下一步可以在控制台执行什么命令。注意你的回答必须以纯文本格式包含一条命令。终端输出：\n` +
+      '```bash\n' + terminalText + '\n```'
+    );
+    if (cmd) {
+      props.writeToTerminal(cmd);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          text: '已粘贴到终端',
+          sender: '系统',
+          type: 'tips'
+        }
+      ]);
+    }
   };
 
   const handleStopGeneration = () => {
@@ -87,7 +111,7 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
     }
   };
 
-  const askLlm = async (question: string) => {
+  const askLlm = async (question: string): Promise<string> => {
     const userText = question;
     const outgoingId = messages.length + 1;
     const incomingId = messages.length + 2;
@@ -112,9 +136,11 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
     newMessages.push(incomingMessage);
     setMessages(newMessages);
 
+    let aiReply = '';
+
     try {
       abortControllerRef.current = new AbortController();
-      
+
       const response = await fetch('http://localhost:11434/api/generate', {
         method: 'POST',
         headers: {
@@ -142,15 +168,16 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
 
         const chunk = decoder.decode(value);
         const lines = chunk.split('\n').filter(line => line.trim());
-        
+
         for (const line of lines) {
           try {
             const parsed = JSON.parse(line);
             if (parsed.response) {
               chunks.push(parsed.response);
+              aiReply = chunks.join("");
               setMessages(prevMessages => {
                 const updatedMessages = [...prevMessages];
-                updatedMessages[updatedMessages.length - 1]['text'] = chunks.join("");
+                updatedMessages[updatedMessages.length - 1]['text'] = aiReply;
                 return updatedMessages;
               });
             }
@@ -169,13 +196,15 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
     } catch (err: unknown) {
       console.error('Error during stream:', err);
       if (err instanceof Error && err.name === 'AbortError') {
-        setMessages(prevMessages => {
-          const updatedMessages = [...prevMessages];
-          if (!updatedMessages[updatedMessages.length - 1]['text'].endsWith('[已停止生成]')) {
-            updatedMessages[updatedMessages.length - 1]['text'] += '\n\n[已停止生成]';
+        setMessages(prevMessages => [
+          ...prevMessages,
+          {
+            id: prevMessages.length + 1,
+            text: '已停止生成',
+            sender: '系统',
+            type: 'error'
           }
-          return updatedMessages;
-        });
+        ]);
       } else {
         setMessages(prevMessages => {
           const updatedMessages = [...prevMessages];
@@ -188,6 +217,10 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
       setIsModelWorking(false);
       abortControllerRef.current = null;
     }
+
+    const thinkRegex = /<think>[\s\S]*?(<\/think>|$)/i;
+    const result = aiReply.replace(thinkRegex, '').trim();
+    return result;
   }
 
   const handleSendMessage = async () => {
@@ -208,64 +241,152 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
   };
 
   useEffect(() => {
-    if (messageListRef.current) {
-      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    const el = messageListRef.current;
+    if (!el) return;
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 2;
+    if (isAtBottom) {
+      el.scrollTop = el.scrollHeight;
     }
   }, [messages]);
+
+  const toggleThinkCollapse = (id: number) => {
+    setThinkCollapseMap(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const renderMessageText = (message: Message) => {
+    if (message.type === 'error') {
+      return (
+        <div className="system-error">
+          {message.text}
+        </div>
+      );
+    }
+    if (message.type === 'tips') {
+      return (
+        <div className="system-tip">
+          {message.text}
+        </div>
+      );
+    }
+
+    const thinkRegex = /<think>([\s\S]*?)(<\/think>|$)/i;
+    const match = message.text.match(thinkRegex);
+
+    if (match) {
+      const beforeThink = message.text.slice(0, match.index);
+      const thinkContent = match[1];
+      const afterThink = match[2] === '</think>'
+        ? message.text.slice(match.index! + match[0].length)
+        : '';
+
+      const collapsed = !thinkCollapseMap[message.id];
+
+      return (
+        <span>
+          {/* before think */}
+          {beforeThink && (
+            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+              {beforeThink}
+            </Markdown>
+          )}
+          {/* think fold */}
+          <div className="think-block">
+            <div
+              className="think-toggle"
+              onClick={() => toggleThinkCollapse(message.id)}
+            >
+              {collapsed ? '显示思考 ▼' : '收起思考 ▲'}
+            </div>
+            {!collapsed && (
+              <div className="think-content">
+                <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+                  {thinkContent}
+                </Markdown>
+              </div>
+            )}
+          </div>
+          {/* after think */}
+          {afterThink && (
+            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+              {afterThink}
+            </Markdown>
+          )}
+        </span>
+      );
+    } else {
+      return (
+        <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+          {message.text}
+        </Markdown>
+      );
+    }
+  };
 
   return (
     <div className="chat-window">
       <div className="top-bar">
-        <Button 
-          icon="bug" 
-          intent="primary" 
+        <Button
+          icon="bug"
+          intent="primary"
           onClick={handleBugClick}
-          disabled={isModelWorking} 
+          disabled={isModelWorking}
         />
-        <Button 
-          icon="help" 
+        <Button
+          icon="help"
           intent="primary"
           disabled={isModelWorking}
         />
-        <Button 
-          icon="code" 
+        <Button
+          icon="code"
+          intent="primary"
+          onClick={handleCodeClick}
+          disabled={isModelWorking}
+        />
+        <Button
+          icon="media"
           intent="primary"
           disabled={isModelWorking}
         />
-        <Button 
-          icon="media" 
+        <Button
+          icon="translate"
           intent="primary"
-          disabled={isModelWorking}
-        />
-        <Button 
-          icon="translate" 
-          intent="primary" 
           onClick={handleTranslateClick}
           disabled={isModelWorking}
         />
         {isModelWorking && (
-          <Button 
-            icon="stop" 
-            intent="danger" 
+          <Button
+            icon="stop"
+            intent="danger"
             onClick={handleStopGeneration}
           >停止生成</Button>
         )}
         <div className="model-select-container">
-          <ModelSelect 
+          <ModelSelect
             onModelSelect={handleModelSelect}
             disabled={isModelWorking}
           />
         </div>
       </div>
       <div className="message-list" ref={messageListRef}>
-        {messages.map((message) => (
-          <div key={message.id} className="message">
-            <span className="sender">{message.sender}: </span>
-            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-              {message.text}
-            </Markdown>
-          </div>
-        ))}
+        {messages.map((message) =>
+          message.type === 'error' || message.type === 'tips' ? (
+            <div key={message.id} className="system-message">
+              {renderMessageText(message)}
+            </div>
+          ) : (
+            <div
+              key={message.id}
+              className={`message-bubble ${message.sender === '我' ? 'from-user' : 'from-ai'}`}
+            >
+              <div className="bubble-content">
+                {renderMessageText(message)}
+              </div>
+            </div>
+          )
+        )}
       </div>
       <div className="input-container">
         <InputGroup
@@ -275,10 +396,10 @@ const HelperWindow: FC<HelperWindowProps> = (props) => {
           onKeyDown={handleKeyDown}
           disabled={isModelWorking}
           rightElement={
-            <Button 
-              icon="send-message" 
-              onClick={handleSendMessage} 
-              large={true} 
+            <Button
+              icon="send-message"
+              onClick={handleSendMessage}
+              large={true}
               intent="primary"
               disabled={isModelWorking || !inputText.trim()}
             />

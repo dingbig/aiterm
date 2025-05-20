@@ -10,6 +10,7 @@ import HelperWindow from './HelperWindow';
 export const App = () => {
   const [count, setCount] = useState(0);
   const terminalRef = useRef<HTMLDivElement>(null);
+  const terminalObj = useRef<Terminal | null>(null);
   const electronApi = (window as any).electronApi as ElectronApi;
   const [getTerminalText, setGetTerminalText] = useState(() => () => '');
 
@@ -63,11 +64,17 @@ export const App = () => {
       }
     });
 
+    terminalObj.current = terminal;
+
     return () => {
       clearTimeout(timeoutId);
       terminal.dispose();
     };
   }, []);
+
+  const writeToTerminal = (cmd: string) => {
+    electronApi.sendToTty(cmd);
+  };
 
   return (
     <div className="container">
@@ -76,7 +83,7 @@ export const App = () => {
           <div className="terminal-container" ref={terminalRef}>
           </div>
           <div className="helper-container">
-            <HelperWindow getTerminalText={getTerminalText}></HelperWindow>
+            <HelperWindow getTerminalText={getTerminalText} writeToTerminal={writeToTerminal}></HelperWindow>
           </div>
         </div>
       </div>

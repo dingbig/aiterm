@@ -46,17 +46,7 @@ app.whenReady().then(() => {
   });
   mainWindow.loadFile("dist/index.html");
 
-  ipcMain.on("terminal-input", (event, input: string) => {
-    ptyProcess.write(input);
-  });
-
-  ipcMain.on("terminal-resize", (event, { cols, rows }) => {
-    ptyProcess.resize(cols, rows);
-  });
-
-
-
-  const shell = os.platform() === "win32" ? "cmd.exe" : os.platform() === "darwin"? "zsh" : "bash";
+  const shell = os.platform() === "win32" ? "cmd.exe" : os.platform() === "darwin" ? "zsh" : "bash";
   const ptyProcess = spawn(shell, [], {
     name: "xterm-color",
     cols: 80,
@@ -65,10 +55,17 @@ app.whenReady().then(() => {
     env: process.env,
   });
 
-  ptyProcess.onData( (data) => {
+  ptyProcess.onData((data) => {
     mainWindow.webContents.send("terminal-output", data);
   });
 
+  ipcMain.on("terminal-input", (event, input: string) => {
+    ptyProcess.write(input);
+  });
+
+  ipcMain.on("terminal-resize", (event, { cols, rows }) => {
+    ptyProcess.resize(cols, rows);
+  });
 });
 
 app.once("window-all-closed", () => app.quit());
